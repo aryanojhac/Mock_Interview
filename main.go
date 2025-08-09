@@ -15,7 +15,7 @@ type User struct {
 	Phone    string `json:"phone" binding:"required,min=10,max=13"`
 }
 
-// Defining test values as required
+// Test values
 var testUsers = []User{
 	{Name: "Aryan", Password: "Aryan@30", Phone: "1234567890"},
 	{Name: "Atharv", Password: "Atharv%03", Phone: "0986543211"},
@@ -24,31 +24,31 @@ var testUsers = []User{
 
 var validate *validator.Validate
 
-func validateUser() {
-	validate = validator.New()
-	// Validating the user Name here
-	validate.RegisterValidation("userName", func(f1 validator.FieldLevel) bool {
-		name := f1.Field().String()
-		match, _ := regexp.MatchString(`^[A-Za-z]+$`, name)
-		return match
-	})
-
-	// Validating password here
-	validate.RegisterValidation("password", func(fl validator.FieldLevel) bool {
-		password := fl.Field().String()
-		match, _ := regexp.MatchString(`^[A-Za-z\d@$!%*?&]*$`, password)
-		// At least 1 uppercase
-		upper := regexp.MustCompile(`[A-Z]`).MatchString(password)
-		// At least 1 digit
-		digit := regexp.MustCompile(`[0-9]`).MatchString(password)
-		// At least 1 special char
-		special := regexp.MustCompile(`[@$!%*?&]`).MatchString(password)
-
-		return match &&upper && digit && special
-	})
+// Username validation: only letters
+func userNameValidator(fl validator.FieldLevel) bool {
+	name := fl.Field().String()
+	if name == "" {
+		return false
+	}
+	match, _ := regexp.MatchString(`^[A-Za-z]+$`, name)
+	return match
 }
 
-// Checking the input from postman (user)
+// Password validation: allowed chars, at least 1 uppercase, 1 digit, 1 special char
+func passwordValidator(fl validator.FieldLevel) bool {
+	password := fl.Field().String()
+	if password == "" {
+		return false
+	}
+	match, _ := regexp.MatchString(`^[A-Za-z\d@$!%*?&]*$`, password)
+	upper := regexp.MustCompile(`[A-Z]`).MatchString(password)
+	digit := regexp.MustCompile(`[0-9]`).MatchString(password)
+	special := regexp.MustCompile(`[@$!%*?&]`).MatchString(password)
+
+	return match && upper && digit && special
+}
+
+// Check hardcoded credentials
 func checkCredentials(name, password, phone string) bool {
 	for _, u := range testUsers {
 		if u.Name == name && u.Password == password && u.Phone == phone {
@@ -58,20 +58,21 @@ func checkCredentials(name, password, phone string) bool {
 	return false
 }
 
+// SignIn handler
 func signIn(c *gin.Context) {
 	var user User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "binding error"})
 		return
 	}
-	// Validating Structure using go-play...
+
 	if err := validate.Struct(user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"validation_error": "the input is not valid"})
 		return
 	}
 
 	if !checkCredentials(user.Name, user.Password, user.Phone) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid Name or Password or Phone Number"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong Name or Password or Phone Number"})
 		return
 	}
 
@@ -81,7 +82,10 @@ func signIn(c *gin.Context) {
 func main() {
 	router := gin.Default()
 
-	validateUser()
+	// Registering custom rules
+	validate = validator.New()
+	validate.RegisterValidation("userName", userNameValidator)
+	validate.RegisterValidation("password", passwordValidator)
 
 	router.POST("/signIn", signIn)
 
