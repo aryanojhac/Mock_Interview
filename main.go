@@ -48,7 +48,7 @@ func passwordValidator(fl validator.FieldLevel) bool {
 	return match && upper && digit && special
 }
 
-// Check hardcoded credentials
+// Checking hardcoded credentials
 func checkCredentials(name, password, phone string) bool {
 	for _, u := range testUsers {
 		if u.Name == name && u.Password == password && u.Phone == phone {
