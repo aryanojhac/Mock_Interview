@@ -9,10 +9,14 @@ import (
 )
 
 // Defining structure of the User
-type User struct {
+type UserValueRequest struct {
 	Name     string `json:"name" binding:"required,min=2,max=100" validate:"userName"`
 	Password string `json:"password" binding:"required,min=6,max=100" validate:"password"`
 	Phone    string `json:"phone" binding:"required,min=10,max=13"`
+}
+
+type ValidationResponse struct {
+	Message string `json:"message"`
 }
 
 // Test values
@@ -60,14 +64,18 @@ func passwordValidator(fl validator.FieldLevel) bool {
 
 // SignIn handler
 func signIn(c *gin.Context) {
-	var user User
+	var user UserValueRequest
 	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "binding error"})
+		c.JSON(http.StatusBadRequest, ValidationResponse{
+			Message: "Invalid request format",
+		})
 		return
 	}
 
 	if err := validate.Struct(user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"validation_error": "the input is not valid"})
+		c.JSON(http.StatusBadRequest, ValidationResponse{
+			Message: "Validation failed",
+		})
 		return
 	}
 
