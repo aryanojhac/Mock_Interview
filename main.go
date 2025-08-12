@@ -16,11 +16,11 @@ type User struct {
 }
 
 // Test values
-var testUsers = []User{
-	{Name: "Aryan", Password: "Aryan@30", Phone: "1234567890"},
-	{Name: "Atharv", Password: "Atharv%03", Phone: "0986543211"},
-	{Name: "Shravani", Password: "shanu@15", Phone: "1223341455"},
-}
+// var testUsers = []User{
+// 	{Name: "Aryan", Password: "Aryan@30", Phone: "1234567890"},
+// 	{Name: "Atharv", Password: "Atharv%03", Phone: "0986543211"},
+// 	{Name: "Shravani", Password: "shanu@15", Phone: "1223341455"},
+// }
 
 var validate *validator.Validate
 
@@ -48,15 +48,15 @@ func passwordValidator(fl validator.FieldLevel) bool {
 	return match && upper && digit && special
 }
 
-// Checking hardcoded credentials
-func checkCredentials(name, password, phone string) bool {
-	for _, u := range testUsers {
-		if u.Name == name && u.Password == password && u.Phone == phone {
-			return true
-		}
-	}
-	return false
-}
+// // Checking hardcoded credentials
+// func checkCredentials(name, password, phone string) bool {
+// 	for _, u := range testUsers {
+// 		if u.Name == name && u.Password == password && u.Phone == phone {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 // SignIn handler
 func signIn(c *gin.Context) {
@@ -71,12 +71,15 @@ func signIn(c *gin.Context) {
 		return
 	}
 
-	if !checkCredentials(user.Name, user.Password, user.Phone) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wrong Name or Password or Phone Number"})
-		return
-	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "The input is valid!",
+		"Name":    user.Name,
+	})
 
-	c.IndentedJSON(http.StatusOK, gin.H{"Name": user.Name, "message": "Signed In Successfully"})
+	// if !checkCredentials(user.Name, user.Password, user.Phone) {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "wrong Name or Password or Phone Number"})
+	// 	return
+	// }
 }
 
 func main() {
